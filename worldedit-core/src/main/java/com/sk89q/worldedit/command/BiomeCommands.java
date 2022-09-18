@@ -188,4 +188,41 @@ public class BiomeCommands {
             .append(TranslatableComponent.of("worldedit.setbiome.warning")));
     }
 
+    @Command(
+            name = "/replacebiome",
+            desc = "Replaces the biome of your current block or region.",
+            descFooter = "By default, uses all the blocks in your selection"
+    )
+    @Logging(REGION)
+    @CommandPermissions("worldedit.biome.set")
+    public void replaceBiome(Player player, LocalSession session, EditSession editSession,
+                         @Arg(desc = "Biome type.") BiomeType toReplace,
+                         @Arg(desc = "Biome type.") BiomeType target,
+                         @Switch(name = 'p', desc = "Use your current position")
+                         boolean atPosition) throws WorldEditException {
+        World world = player.getWorld();
+        Region region;
+        Mask mask = editSession.getMask();
+
+        if (atPosition) {
+            final BlockVector3 pos = player.getLocation().toVector().toBlockPoint();
+            region = new CuboidRegion(pos, pos);
+        } else {
+            region = session.getSelection(world);
+        }
+
+        RegionFunction replace = new BiomeReplace(editSession, target, toReplace);
+        if (mask != null) {
+            replace = new RegionMaskingFilter(mask, replace);
+        }
+        RegionVisitor visitor = new RegionVisitor(region, replace);
+        Operations.completeLegacy(visitor);
+
+        player.printInfo(TranslatableComponent.of(
+                        "worldedit.setbiome.changed",
+                        TextComponent.of(visitor.getAffected())
+                )
+                .append(TextComponent.newline())
+                .append(TranslatableComponent.of("worldedit.setbiome.warning")));
+    }
 }

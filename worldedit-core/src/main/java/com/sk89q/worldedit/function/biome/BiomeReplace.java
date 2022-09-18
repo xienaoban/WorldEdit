@@ -37,6 +37,7 @@ public class BiomeReplace implements FlatRegionFunction, RegionFunction {
 
     private final Extent extent;
     private final BiomePattern biome;
+    private final BiomePattern toReplace;
 
     /**
      * Create a new instance.
@@ -55,20 +56,34 @@ public class BiomeReplace implements FlatRegionFunction, RegionFunction {
      * @param pattern the biome pattern to set
      */
     public BiomeReplace(Extent extent, BiomePattern pattern) {
+        this(extent, pattern, null);
+    }
+
+    /**
+     * Create a new instance.
+     *
+     * @param extent the extent to apply this function to
+     * @param pattern the biome pattern to set
+     * @param patternToReplace the biome pattern to replace
+     */
+    public BiomeReplace(Extent extent, BiomePattern pattern, BiomePattern patternToReplace) {
         checkNotNull(extent);
         checkNotNull(pattern);
         this.extent = extent;
         this.biome = pattern;
+        this.toReplace = patternToReplace;
     }
 
     @Override
     public boolean apply(BlockVector3 position) throws WorldEditException {
+        if (toReplace != null && toReplace != extent.getBiome(position)) return false;
         return extent.setBiome(position, biome.applyBiome(position));
     }
 
     @Override
     @Deprecated
     public boolean apply(BlockVector2 position) throws WorldEditException {
+        if (toReplace != null && toReplace != extent.getBiome(position)) return false;
         boolean success = false;
         for (int y = extent.getMinimumPoint().getY(); y <= extent.getMaximumPoint().getY(); y++) {
             success |= apply(position.toBlockVector3(y));
